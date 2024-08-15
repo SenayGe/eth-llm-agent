@@ -11,6 +11,7 @@ import { getModel, transformToolMessages } from "../utils";
 // import { AnswerSection } from "@/components/answer-section";
 import { openai } from "@ai-sdk/openai";
 import { BotMessage } from "@/components/bot-message";
+import { AnswerSection } from "@/components/answer-section";
 
 export async function researcher(
   uiStream: ReturnType<typeof createStreamableUI>,
@@ -30,10 +31,10 @@ export async function researcher(
   );
 
   const streamableAnswer = createStreamableValue<string>("");
-  // const answerSection = <AnswerSection result={streamableAnswer.value} />;
-  const answerSection = (
-    <BotMessage>this is supposed to be an asnwer sectionnnn</BotMessage>
-  );
+  const answerSection = <AnswerSection result={streamableAnswer.value} />;
+  // const answerSection = (
+  //   <BotMessage>this is supposed to be an asnwer sectionnnn</BotMessage>
+  // );
 
   console.log("before resullttt");
   const currentDate = new Date().toLocaleString();
@@ -59,6 +60,7 @@ export async function researcher(
   }).catch((err) => {
     hasError = true;
     fullResponse = "Error: " + err.message;
+    console.log(fullResponse); //TODO: remove this console.log
     streamableText.update(fullResponse);
   });
 
@@ -69,6 +71,7 @@ export async function researcher(
 
   const hasToolResult = messages.some((message) => message.role === "tool");
   if (hasToolResult) {
+    console.log("hasToolResult indeeeeeeeeeeed");
     uiStream.append(answerSection);
   }
 
@@ -89,6 +92,7 @@ export async function researcher(
       case "tool-result":
         if (!delta.result) {
           hasError = true;
+          console.log("Error: Tool result is undefined", delta);
         }
         toolResponses.push(delta);
         break;
@@ -101,6 +105,7 @@ export async function researcher(
   }
 
   console.log("afterr resullttt");
+  console.log("fullResponse", fullResponse);
   messages.push({
     role: "assistant",
     content: [{ type: "text", text: fullResponse }, ...toolCalls],
