@@ -255,9 +255,12 @@ import { researcher } from "@/lib/agents/chain-explorer";
 import { Chat } from "@/lib/types";
 import { AIMessage } from "@/lib/types";
 import { UserMessage } from "@/components/user-message";
-// import { AnswerSection } from "@/components/answer-section";
+import { AnswerSection } from "@/components/answer-section";
 import AccountBalanace from "@/components/account-balance";
-import { BotMessage } from "@/components/bot-message";
+import { ErrorCard } from "@/components/error-card";
+import RecentTransactions from "@/components/transactions-list";
+import TransactionsSummary from "@/components/transaction-summary";
+import TransactionDetails from "@/components/tx-details";
 
 async function submit(
   userQuery: string,
@@ -267,12 +270,12 @@ async function submit(
 ) {
   "use server";
 
+  // const isGenerating = createStreamableValue(true);
+  // const isCollapsed = createStreamableValue(false);
+
   const aiState = getMutableAIState<typeof AI>();
   const uiStream = createStreamableUI();
-  const isGenerating = createStreamableValue(true);
-  const isCollapsed = createStreamableValue(false);
-
-  const aiMessages = [...(retryMessages ?? aiState.get().messages)];
+  const aiMessages = [...aiState.get().messages];
   // Get the messages from the state, filter out the tool messages
   const messages: CoreMessage[] = aiMessages
     .filter(
@@ -287,64 +290,34 @@ async function submit(
       return { role, content } as CoreMessage;
     });
 
-  // groupId is used to group the messages for collapse
   const groupId = generateId();
 
-  // const useSpecificAPI = process.env.USE_SPECIFIC_API_FOR_WRITER === "true";
-  // const useOllamaProvider = !!(
-  //   process.env.OLLAMA_MODEL && process.env.OLLAMA_BASE_URL
-  // );
-  const maxMessages = 10; //useSpecificAPI ? 5 : useOllamaProvider ? 1 : 10;
-  // Limit the number of messages to the maximum
-  messages.splice(0, Math.max(messages.length - maxMessages, 0));
-  // Get the user input from the form data
-  // const userInput = skip
-  //   ? `{"action": "skip"}`
-  //   : (formData?.get("input") as string);
+  aiState.update({
+    ...aiState.get(),
+    messages: [
+      ...aiState.get().messages,
+      {
+        id: generateId(),
+        role: "user",
+        content: userQuery,
+        type: "input",
+      },
+    ],
+  });
 
-  // const content = skip
-  //   ? userInput
-  //   : formData
-  //     ? JSON.stringify(Object.fromEntries(formData))
-  //     : null;
-  // const type = skip
-  //   ? undefined
-  //   : formData?.has("input")
-  //     ? "input"
-  //     : formData?.has("related_query")
-  //       ? "input_related"
-  //       : "inquiry";
-
-  // Add the user message to the state
-  const content = true;
-  if (content) {
-    aiState.update({
-      ...aiState.get(),
-      messages: [
-        ...aiState.get().messages,
-        {
-          id: generateId(),
-          role: "user",
-          content: userQuery,
-        },
-      ],
-    });
-
-    messages.push({
-      role: "user",
-      content: userQuery,
-    });
-  }
+  messages.push({
+    role: "user",
+    content: userQuery,
+  });
 
   async function processEvents() {
     // Show the spinner
     uiStream.append(<Spinner />);
 
-    let action = { object: { next: "proceed" } };
     // If the user skips the task, we proceed to the search
 
     // Set the collapsed state to true
-    isCollapsed.done(true);
+    // isCollapsed.done(true);
 
     //  Generate the answer
     let answer = "";
@@ -409,13 +382,26 @@ async function submit(
           },
         ],
       });
+
+      aiState.done({
+        ...aiState.get(),
+        messages: [
+          ...aiState.get().messages,
+          {
+            id: groupId,
+            role: "assistant",
+            content: "followup",
+            type: "followup",
+          },
+        ],
+      });
     } else {
       aiState.done(aiState.get());
       streamText.done();
-      uiStream.append(<div>"An error occurred. Please try again."</div>);
+      uiStream.append(<ErrorCard errorMessage="An error occurred" />);
     }
 
-    isGenerating.done(false);
+    // isGenerating.done(false);
     uiStream.done();
   }
 
@@ -423,23 +409,20 @@ async function submit(
 
   return {
     id: generateId(),
-    isGenerating: isGenerating.value,
     component: uiStream.value,
-    isCollapsed: isCollapsed.value,
   };
 }
 
 export type AIState = {
   messages: AIMessage[];
   chatId: string;
-  isSharePage?: boolean;
 };
 
 export type UIState = {
   id: string;
   component: React.ReactNode;
-  isGenerating?: StreamableValue<boolean>;
-  isCollapsed?: StreamableValue<boolean>;
+  // isGenerating?: StreamableValue<boolean>;
+  // isCollapsed?: StreamableValue<boolean>;
 }[];
 
 const initialAIState: AIState = {
@@ -476,14 +459,14 @@ export const AI = createAI<AIState, UIState>({
     }
 
     const { chatId, messages } = state;
-    const createdAt = new Date();
-    const userId = "anonymous";
-    const path = `/search/${chatId}`;
-    const title =
-      messages.length > 0
-        ? JSON.parse(messages[0].content)?.input?.substring(0, 100) ||
-          "Untitled"
-        : "Untitled";
+    // const createdAt = new Date();
+    // const userId = "anonymous";
+    // const path = `/search/${chatId}`;
+    // const title =
+    //   messages.length > 0
+    //     ? JSON.parse(messages[0].content)?.input?.substring(0, 100) ||
+    //       "Untitled"
+    //     : "Untitled";
     // Add an 'end' message at the end to determine if the history needs to be reloaded
     const updatedMessages: AIMessage[] = [
       ...messages,
@@ -495,14 +478,14 @@ export const AI = createAI<AIState, UIState>({
       },
     ];
 
-    const chat: Chat = {
-      id: chatId,
-      createdAt,
-      userId,
-      path,
-      title,
-      messages: updatedMessages,
-    };
+    // const chat: Chat = {
+    //   id: chatId,
+    //   createdAt,
+    //   userId,
+    //   path,
+    //   title,
+    //   messages: updatedMessages,
+    // };
   },
 });
 
@@ -546,7 +529,7 @@ export const getUIStateFromAIState = (aiState: Chat) => {
             case "answer":
               return {
                 id,
-                component: <BotMessage> Bot answer here </BotMessage>,
+                component: <AnswerSection result={answer.value} />,
               };
           }
         case "tool":
@@ -567,6 +550,35 @@ export const getUIStateFromAIState = (aiState: Chat) => {
                 return {
                   id,
                   component: <AccountBalanace data={toolOutput} />,
+                  isCollapsed: isCollapsed.value,
+                };
+
+              case "getRecentTransactions":
+                return {
+                  id,
+                  component: (
+                    <RecentTransactions
+                      address={toolOutput.address}
+                      transactions={toolOutput.transactions}
+                    />
+                  ),
+                  isCollapsed: isCollapsed.value,
+                };
+              case "getTransactionSummary":
+                return {
+                  id,
+                  component: (
+                    <TransactionsSummary
+                      address={toolOutput.address}
+                      data={toolOutput.result}
+                    />
+                  ),
+                  isCollapsed: isCollapsed.value,
+                };
+              case "getTransactionByHash":
+                return {
+                  id,
+                  component: <TransactionDetails data={toolOutput} />,
                   isCollapsed: isCollapsed.value,
                 };
             }
