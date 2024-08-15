@@ -28,7 +28,7 @@ const exampleMessages = [
 export function EmptyScreen({
   submitMessage,
 }: {
-  submitMessage: (message: string) => void;
+  submitMessage?: (message: string) => void;
 }) {
   return (
     <div className="mx-auto max-w-2xl px-4">
@@ -65,7 +65,7 @@ export function EmptyScreen({
               variant="link"
               className="h-auto p-0 text-base"
               onClick={async () => {
-                submitMessage(message.message);
+                // submitMessage?? submitMessage(message.message);
               }}
             >
               <IconArrowRight className="mr-2 text-muted-foreground" />
