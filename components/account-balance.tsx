@@ -1,45 +1,54 @@
+"use client";
+
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Wallet, CreditCard } from "lucide-react";
-
-interface AccountDetails {
-  account: string; // eth address
-  balance: string;
-}
+import { StreamableValue, useStreamableValue } from "ai/rsc";
+import { BalanceSkeleton } from "./balance-skeleton";
+import { Account as TypeAccount } from "@/lib/types";
 
 interface AccountBalanceProps {
-  data: AccountDetails;
+  result: StreamableValue<string>; //TODO: add streamable value type
 }
-const AccountBalanace: React.FC<AccountBalanceProps> = ({ data }) => {
-  const { account, balance } = data;
+export function AccountBalanace({ result }: AccountBalanceProps) {
+  const [data, error, pending] = useStreamableValue(result);
+  const accountDetails: TypeAccount = data ? JSON.parse(data) : undefined;
+  console.log(`dataaaaaa: ${data}`);
 
   return (
-    <Card className="w-full max-w-md mx-auto bg-[#262626] text-white">
-      <CardHeader>
-        <CardTitle className="flex items-center justify-center space-x-2">
-          <Wallet className="w-6 h-6" />
-          <span>Ethereum Account Details</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          <div className="flex items-center space-x-2">
-            <CreditCard className="w-5 h-5 text-blue-400" />
-            <p className="text-sm text-gray-300 break-all">
-              <span className="font-semibold">Address:</span> {account}
-            </p>
-          </div>
-          <div className="text-center">
-            <p className="text-lg font-semibold">Balance:</p>
-            <p className="text-2xl font-bold">{balance} ETH</p>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="py-4">
+      {!pending && data ? (
+        <Card className="w-full max-w-md mx-auto bg-[#262626] text-white">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-center space-x-2">
+              <Wallet className="w-6 h-6" />
+              <span>Ethereum Account Details</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <CreditCard className="w-5 h-5 text-blue-400" />
+                <p className="text-sm text-gray-300 break-all">
+                  <span className="font-semibold">Address:</span>{" "}
+                  {accountDetails.address}
+                </p>
+              </div>
+              <div className="text-center">
+                <p className="text-lg font-semibold">Balance:</p>
+                <p className="text-2xl font-bold">
+                  {accountDetails.balance} ETH
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <BalanceSkeleton />
+      )}
+    </div>
   );
-};
-
-export default AccountBalanace;
+}
 
 // import React from "react";
 // import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

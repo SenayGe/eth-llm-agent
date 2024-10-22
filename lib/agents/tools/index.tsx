@@ -1,6 +1,6 @@
 ////////////////////////    eth_agent Tools    ////////////////////////
 import { tool } from "ai";
-import { createStreamableUI } from "ai/rsc";
+import { createStreamableUI, createStreamableValue } from "ai/rsc";
 import {
   createPublicClient,
   http,
@@ -13,12 +13,14 @@ import { mainnet } from "viem/chains";
 import axios from "axios";
 import { bigint, z } from "zod";
 import { BalanceSkeleton } from "@/components/balance-skeleton";
-import AccountBalanace from "@/components/account-balance";
+import { AccountBalanace } from "@/components/account-balance";
 import RecentTransactionsSkeleton from "@/components/transactions-skeleton";
 import RecentTransactions from "@/components/transactions-list";
 import TransactionsSummary from "@/components/transaction-summary";
 import TransactionDetails from "@/components/tx-details";
+import { Account } from "@/lib/types";
 import { get } from "http";
+import { use } from "react";
 
 // Create a client instance
 const client = createPublicClient({
@@ -43,16 +45,17 @@ export const getAccountBalanceTool = ({ uiStream, fullResponse }: ToolProps) =>
 
       let hasError = false;
       // Append the search section
-      uiStream.append(<BalanceSkeleton />);
+      const streamBalance = createStreamableValue<string>(); //TODO: add streamable value type
+      uiStream.append(<AccountBalanace result={streamBalance.value} />);
 
-      let accountDetails: any = null;
+      let accountDetails;
 
       try {
         const balance = await client.getBalance({ address });
         // return balance.toString();
         console.log("balance", balance);
         accountDetails = {
-          account: address,
+          address: address,
           balance: formatEther(balance),
         };
       } catch (error) {
@@ -62,10 +65,11 @@ export const getAccountBalanceTool = ({ uiStream, fullResponse }: ToolProps) =>
       if (hasError || !accountDetails) {
         fullResponse = `An error occurred".`;
         uiStream.update(null);
+        streamBalance.done();
         return accountDetails;
       }
 
-      uiStream.update(<AccountBalanace data={accountDetails} />);
+      streamBalance.done(JSON.stringify(accountDetails));
 
       return accountDetails;
     },
@@ -164,7 +168,7 @@ export const getTransactionDetailsTool = ({
       let hasError = false;
 
       // Append the search section
-      // uiStream.append(<TransactionDetailsSkeleton />);
+      uiStream.append(<RecentTransactionsSkeleton />);
       const etherscanApiKey = process.env.ETHERSCAN_API_KEY;
 
       let transactionDetails: TransactionFullDetails | null = null;
@@ -247,27 +251,6 @@ export const getTransactionDetailsTool = ({
       return transactionDetails;
     },
   });
-export const getTools = ({ uiStream, fullResponse }: ToolProps) => {
-  const tools: any = {
-    getBalance: getAccountBalanceTool({
-      uiStream,
-      fullResponse,
-    }),
-    getRecentTransactions: getRecentTransactionsTool({
-      uiStream,
-      fullResponse,
-    }),
-    getTransactionSummary: getTransactionSummaryTool({
-      uiStream,
-      fullResponse,
-    }),
-    getTransactionByHash: getTransactionDetailsTool({
-      uiStream,
-      fullResponse,
-    }),
-  };
-  return tools;
-};
 
 interface TransactionSummary {
   totalReceived: string;
@@ -297,8 +280,7 @@ export const getTransactionSummaryTool = ({
 
       const etherscanApiKey = process.env.ETHERSCAN_API_KEY;
       // Append the search section
-      // uiStream.append(<TransactionSummarySkeleton />);
-      // uiStream.append(<RecentTransactionsSkeleton />);
+      uiStream.update(<BalanceSkeleton />);
 
       let transactions: TransactionEtherScan[] = [];
       try {
@@ -355,6 +337,28 @@ export const getTransactionSummaryTool = ({
       return { result, address };
     },
   });
+
+export const getTools = ({ uiStream, fullResponse }: ToolProps) => {
+  const tools: any = {
+    getBalance: getAccountBalanceTool({
+      uiStream,
+      fullResponse,
+    }),
+    getRecentTransactions: getRecentTransactionsTool({
+      uiStream,
+      fullResponse,
+    }),
+    getTransactionSummary: getTransactionSummaryTool({
+      uiStream,
+      fullResponse,
+    }),
+    getTransactionByHash: getTransactionDetailsTool({
+      uiStream,
+      fullResponse,
+    }),
+  };
+  return tools;
+};
 
 // getRecentTransactions (Etherscan) Usage example:
 // const apiKey = 'YOUR_ETHERSCAN_API_KEY';

@@ -256,7 +256,7 @@ import { Chat } from "@/lib/types";
 import { AIMessage } from "@/lib/types";
 import { UserMessage } from "@/components/user-message";
 import { AnswerSection } from "@/components/answer-section";
-import AccountBalanace from "@/components/account-balance";
+import { AccountBalanace } from "@/components/account-balance";
 import { ErrorCard } from "@/components/error-card";
 import RecentTransactions from "@/components/transactions-list";
 import TransactionsSummary from "@/components/transaction-summary";
@@ -549,7 +549,7 @@ export const getUIStateFromAIState = (aiState: Chat) => {
               case "getBalance":
                 return {
                   id,
-                  component: <AccountBalanace data={toolOutput} />,
+                  component: <AccountBalanace result={toolOutput} />,
                   isCollapsed: isCollapsed.value,
                 };
 

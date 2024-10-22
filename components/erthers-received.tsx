@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { formatEther } from "viem";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

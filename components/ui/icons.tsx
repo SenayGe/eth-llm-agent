@@ -89,7 +89,7 @@ function IconUser({ className, ...props }: React.ComponentProps<"svg">) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 256 256"
+      viewBox="0 0 256 200"
       fill="currentColor"
       className={cn("h-4 w-4", className)}
       {...props}

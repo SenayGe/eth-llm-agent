@@ -1,5 +1,6 @@
 import React from "react";
 import { User } from "lucide-react";
+import { IconUser } from "@/components/ui/icons";
 
 type UserMessageProps = {
   message: string;
@@ -17,7 +18,7 @@ export const UserMessage: React.FC<UserMessageProps> = ({
   return (
     <div className="flex items-start w-full space-x-3 mt-2 min-h-10">
       <div className="flex-shrink-0">
-        <User className="h-8 w-8 text-gray-600" />
+        <IconUser className="h-6 w-6" />
       </div>
       <div className="flex-1">
         <div className="text-xl break-words w-full">{message}</div>
