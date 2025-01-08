@@ -1,5 +1,7 @@
-# Blockchain explorer using LLM agent and RAG system
+# Blockchain explorer using LLM agents and RAG 
 
-Work In Progress
+Think Etherscan but you can just chat with it and ask anything you want to know. (Work In Progress)
+
+
 
 ## Demo (current state)
