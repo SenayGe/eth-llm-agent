@@ -6,7 +6,5 @@ Think Etherscan but you can just chat with it and ask anything you want to know.
 
 ## Demo (current state)
 
-<video src="
-https://github.com/user-attachments/assets/112e3021-fb93-4f34-a601-a7946167a1e4
-"/>
+<video src="https://github.com/user-attachments/assets/112e3021-fb93-4f34-a601-a7946167a1e4"/>
 
